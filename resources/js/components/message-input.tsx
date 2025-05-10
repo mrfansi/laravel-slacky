@@ -1,5 +1,5 @@
 import { Channel } from '@/types';
-import { Send, Paperclip, X, Smile, Image } from 'lucide-react';
+import { Send, Paperclip, X, Smile } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { useState, useRef, useEffect } from 'react';
@@ -44,6 +44,15 @@ export function MessageInput({
         setIsLoading(true);
         
         try {
+            // If we have a direct callback for sending messages (used in thread replies)
+            if (onSendMessage) {
+                await onSendMessage(message, files.length > 0 ? files : undefined);
+                setMessage('');
+                setFiles([]);
+                return;
+            }
+            
+            const channelId = getChannelId();
             const formData = new FormData();
             formData.append('content', message);
             formData.append('type', 'text');
@@ -57,13 +66,13 @@ export function MessageInput({
                 formData.append('attachments[]', file);
             });
             
-            await axios.post(`/api/channels/${channel.id}/messages`, formData, {
+            await axios.post(`/api/channels/${channelId}/messages`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+                    'Content-Type': 'multipart/form-data',
+                },
             });
             
-            // Clear input and files after sending
+            // Clear the input and files
             setMessage('');
             setFiles([]);
             
@@ -118,23 +127,51 @@ export function MessageInput({
         };
     }, [message]);
     
+    const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setMessage(e.target.value);
+    };
+    
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    };
+    
+    // Get channel name for placeholder
+    const getChannelName = (): string => {
+        if (typeof channel === 'number') {
+            return 'channel';
+        }
+        return channel.name || 'channel';
+    };
+    
     return (
-        <div className="border rounded-lg p-4 shadow-sm bg-card">
-            {/* File attachments preview */}
+        <div className="relative">
+            {/* File input (hidden) */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                multiple
+                onChange={handleFileChange}
+            />
+            
+            {/* File preview */}
             {files.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-2">
+                <div className="mb-2 flex flex-wrap gap-2">
                     {files.map((file, index) => (
-                        <Badge 
-                            key={index} 
+                        <Badge
+                            key={index}
                             variant="secondary"
-                            className="flex items-center gap-1 py-1.5 px-3"
+                            className="flex items-center gap-1 pl-2"
                         >
-                            <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span className="max-w-[150px] truncate text-xs">{file.name}</span>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="ml-1 h-4 w-4 rounded-full hover:bg-destructive/10 hover:text-destructive" 
+                            <Paperclip className="h-3 w-3" />
+                            <span className="truncate max-w-[150px]">{file.name}</span>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 rounded-full"
                                 onClick={() => removeFile(index)}
                             >
                                 <X className="h-3 w-3" />
@@ -144,112 +181,93 @@ export function MessageInput({
                 </div>
             )}
             
-            {/* Message input */}
             <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    onClick={handleFileSelect}
-                                    disabled={isLoading}
-                                    className="text-muted-foreground hover:text-foreground rounded-full"
-                                >
-                                    <Paperclip className="h-5 w-5" />
-                                    <input 
-                                        type="file" 
-                                        ref={fileInputRef} 
-                                        className="hidden" 
-                                        multiple 
-                                        onChange={handleFileChange}
-                                    />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                                <p>Attach files</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                <div className="flex-1 relative">
+                    <Input
+                        placeholder={placeholder || `Message #${getChannelName()}`}
+                        value={message}
+                        onChange={handleMessageChange}
+                        onKeyDown={handleKeyDown}
+                        className={cn(
+                            compact ? 'h-9 px-3 py-1' : 'h-10',
+                            'pr-24'
+                        )}
+                        disabled={isLoading}
+                    />
                     
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="text-muted-foreground hover:text-foreground rounded-full"
-                                    disabled={isLoading}
-                                >
-                                    <Image className="h-5 w-5" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                                <p>Add image</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                        {/* Only show file attachment button on non-compact view or on larger screens */}
+                        {(!compact || (typeof window !== 'undefined' && window.innerWidth > 640)) && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="text-muted-foreground hover:text-foreground rounded-full"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            disabled={isLoading}
+                                        >
+                                            <Paperclip className={cn(
+                                                compact ? 'h-4 w-4' : 'h-5 w-5'
+                                            )} />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        <p>Attach files</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                        
+                        {/* Only show emoji button on non-compact view or on larger screens */}
+                        {(!compact || (typeof window !== 'undefined' && window.innerWidth > 768)) && (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="text-muted-foreground hover:text-foreground rounded-full"
+                                            disabled={isLoading}
+                                        >
+                                            <Smile className={cn(
+                                                compact ? 'h-4 w-4' : 'h-5 w-5'
+                                            )} />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top">
+                                        <p>Add emoji</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )}
+                    </div>
                 </div>
                 
-                <Input
-                    placeholder={placeholder || `Message #${channel.name}`}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            sendMessage();
-                        }
-                    }}
-                    disabled={isLoading}
-                    className={cn(
-                        "flex-1 border-muted bg-background/50 focus-visible:ring-1 focus-visible:ring-ring",
-                        "transition-all duration-200 ease-in-out"
-                    )}
-                />
-                
-                <div className="flex items-center gap-1">
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="text-muted-foreground hover:text-foreground rounded-full"
-                                    disabled={isLoading}
-                                >
-                                    <Smile className="h-5 w-5" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                                <p>Add emoji</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                    
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button 
-                                    onClick={sendMessage} 
-                                    disabled={(!message.trim() && files.length === 0) || isLoading}
-                                    variant="default"
-                                    size="icon"
-                                    className={cn(
-                                        "rounded-full transition-all duration-200",
-                                        (!message.trim() && files.length === 0) ? "opacity-50" : "opacity-100"
-                                    )}
-                                >
-                                    <Send className="h-4 w-4" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                                <p>Send message</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-                </div>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                type="submit"
+                                size={compact ? 'sm' : 'icon'}
+                                onClick={sendMessage}
+                                disabled={isLoading || (!message.trim() && files.length === 0)}
+                                className={cn(
+                                    "flex-shrink-0 rounded-full",
+                                    (!message.trim() && files.length === 0) ? "opacity-50" : "opacity-100"
+                                )}
+                            >
+                                <Send className={cn(
+                                    compact ? 'h-4 w-4' : 'h-5 w-5'
+                                )} />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                            <p>Send message</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </div>
         </div>
     );
