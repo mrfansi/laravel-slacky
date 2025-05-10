@@ -50,21 +50,24 @@ export default function ChannelView({ auth, channel }: Props) {
         
         try {
             // Set up Echo to listen for new messages
-            const privateChannel = window.Echo.private(`private-channel.${channelId}`);
+            const privateChannel = window.Echo.private(`channel.${channelId}`);
             
             // Debug listener registration
-            console.log('Registered listeners on private channel:', `private-channel.${channelId}`);
+            console.log('Registered listeners on private channel:', `channel.${channelId}`);
             
-            privateChannel.listen('.message.sent', (e: any) => {
-                console.log('Received message.sent event:', e);
-                if (e.sender.id !== userId) {
-                    setMessages((prev) => [...prev, e.message]);
-                    scrollToBottom();
-                }
+            privateChannel.listen('MessageSent', (e: any) => {
+                console.log('Received MessageSent event:', e);
+                setMessages((prev) => {
+                    if (!prev.some(msg => msg.id === e.message.id)) {
+                        return [...prev, e.message];
+                    }
+                    return prev;
+                });
+                scrollToBottom();
             });
             
-            privateChannel.listen('.message.updated', (e: any) => {
-                console.log('Received message.updated event:', e);
+            privateChannel.listen('MessageUpdated', (e: any) => {
+                console.log('Received MessageUpdated event:', e);
                 setMessages((prev) =>
                     prev.map((msg) =>
                         msg.id === e.message.id ? { ...msg, content: e.message.content, updated_at: e.message.updated_at } : msg,
@@ -72,23 +75,27 @@ export default function ChannelView({ auth, channel }: Props) {
                 );
             });
             
-            privateChannel.listen('.message.deleted', (e: any) => {
-                console.log('Received message.deleted event:', e);
+            privateChannel.listen('MessageDeleted', (e: any) => {
+                console.log('Received MessageDeleted event:', e);
                 setMessages((prev) => prev.filter((msg) => msg.id !== e.message_id));
             });
 
             // Set up presence channel for typing indicators
-            const presenceChannel = window.Echo.join(`presence-channel.${channelId}`);
+            const presenceChannel = window.Echo.join(`presence.channel.${channelId}`);
             
             // Debug presence channel
-            console.log('Joined presence channel:', `presence-channel.${channelId}`);
+            console.log('Joined presence channel:', `presence.channel.${channelId}`);
             
             presenceChannel.here((users: any) => {
                 console.log('Users in channel:', users);
             });
             
-            presenceChannel.listen('.user.typing', (e: any) => {
-                console.log('Received user.typing event:', e);
+            presenceChannel.whisper('typing', {
+                user: auth.user
+            });
+            
+            presenceChannel.listenForWhisper('typing', (e: any) => {
+                console.log('Received typing whisper:', e);
                 if (e.user.id !== userId) {
                     const typingUser = e.user;
                     setTypingUsers((prev) => {
@@ -108,16 +115,10 @@ export default function ChannelView({ auth, channel }: Props) {
             console.error('Error setting up Echo listeners:', error);
         }
 
-        // Clean up function
         return () => {
             if (typeof window !== 'undefined' && window.Echo) {
-                try {
-                    // Leave the channels when component unmounts
-                    window.Echo.leave(`private-channel.${channelId}`);
-                    window.Echo.leave(`presence-channel.${channelId}`);
-                } catch (error) {
-                    console.error('Error cleaning up Echo listeners:', error);
-                }
+                window.Echo.leave(`channel.${channelId}`);
+                window.Echo.leave(`presence.channel.${channelId}`);
             }
         };
     }, [channelId, userId]);
@@ -149,8 +150,18 @@ export default function ChannelView({ auth, channel }: Props) {
 
     // Handle typing notification
     const handleTyping = () => {
-        if (!channelId) return;
-        axios.post(`/api/channels/${channelId}/typing`);
+        if (!channelId || typeof window === 'undefined' || !window.Echo) return;
+        
+        try {
+            // Use whisper for typing notifications instead of API call
+            const presenceChannel = window.Echo.join(`presence.channel.${channelId}`);
+            presenceChannel.whisper('typing', {
+                user: auth.user
+            });
+            console.log('Sent typing whisper on channel:', `presence.channel.${channelId}`);
+        } catch (error) {
+            console.error('Error sending typing notification:', error);
+        }
     };
 
     // Filter parent messages (not replies)
@@ -171,24 +182,26 @@ export default function ChannelView({ auth, channel }: Props) {
                 <ChannelHeader channel={channel} currentUser={auth.user} />
 
                 {/* Messages Area */}
-                <ScrollArea className="my-4 flex-1 rounded-md border p-6">
-                    <div className="space-y-6">
-                        {messagesWithReplies.length === 0 ? (
-                            <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-                                <p className="text-muted-foreground">No messages yet</p>
-                                <p className="text-muted-foreground text-sm">Be the first to send a message!</p>
-                            </div>
-                        ) : (
-                            messagesWithReplies.map((message) => (
-                                <MessageItem key={message.id} message={message} currentUser={auth.user} onReply={handleReply} />
-                            ))
-                        )}
+                <div className="relative my-4 flex-1 overflow-hidden rounded-md border">
+                    <ScrollArea className="h-full">
+                        <div className="flex flex-col space-y-4 p-4">
+                            {messagesWithReplies.length === 0 ? (
+                                <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+                                    <p className="text-muted-foreground">No messages yet</p>
+                                    <p className="text-muted-foreground text-sm">Be the first to send a message!</p>
+                                </div>
+                            ) : (
+                                messagesWithReplies.map((message) => (
+                                    <MessageItem key={message.id} message={message} currentUser={auth.user} onReply={handleReply} />
+                                ))
+                            )}
 
-                        <TypingIndicator typingUsers={typingUsers} />
+                            <TypingIndicator typingUsers={typingUsers} />
 
-                        <div ref={messagesEndRef} />
-                    </div>
-                </ScrollArea>
+                            <div ref={messagesEndRef} />
+                        </div>
+                    </ScrollArea>
+                </div>
 
                 {/* Reply indicator */}
                 {replyToMessage && (

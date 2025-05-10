@@ -29,8 +29,7 @@ class MessageUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('private-channel.'.$this->message->channel_id),
-            new PresenceChannel('presence-channel.'.$this->message->channel_id),
+            new PrivateChannel('channel.'.$this->message->channel_id),
         ];
     }
 
@@ -39,7 +38,7 @@ class MessageUpdated implements ShouldBroadcastNow
      */
     public function broadcastAs(): string
     {
-        return 'message.updated';
+        return 'MessageUpdated';
     }
 
     /**

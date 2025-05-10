@@ -29,8 +29,8 @@ class MessageDeleted implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('private-channel.'.$this->channelId),
-            new PresenceChannel('presence-channel.'.$this->channelId),
+            new PrivateChannel('channel.'.$this->channelId),
+            new PresenceChannel('presence.channel.'.$this->channelId),
         ];
     }
 
@@ -39,7 +39,7 @@ class MessageDeleted implements ShouldBroadcastNow
      */
     public function broadcastAs(): string
     {
-        return 'message.deleted';
+        return 'MessageDeleted';
     }
 
     /**
