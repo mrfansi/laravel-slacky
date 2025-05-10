@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
         ]);
-        
+
         // Create test users
         $testUsers = [
             [
@@ -40,7 +40,7 @@ class UserSeeder extends Seeder
                 'email' => 'alice@example.com',
             ],
         ];
-        
+
         foreach ($testUsers as $user) {
             User::create([
                 'name' => $user['name'],

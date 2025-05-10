@@ -2,11 +2,9 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -31,8 +29,8 @@ class MessageDeleted implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('private-channel.' . $this->channelId),
-            new PresenceChannel('presence-channel.' . $this->channelId),
+            new PrivateChannel('private-channel.'.$this->channelId),
+            new PresenceChannel('presence-channel.'.$this->channelId),
         ];
     }
 

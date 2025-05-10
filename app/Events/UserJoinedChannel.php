@@ -4,7 +4,6 @@ namespace App\Events;
 
 use App\Models\Channel;
 use App\Models\User;
-use Illuminate\Broadcasting\Channel as BroadcastChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -32,8 +31,8 @@ class UserJoinedChannel implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('private-channel.' . $this->channel->id),
-            new PresenceChannel('presence-channel.' . $this->channel->id),
+            new PrivateChannel('private-channel.'.$this->channel->id),
+            new PresenceChannel('presence-channel.'.$this->channel->id),
         ];
     }
 

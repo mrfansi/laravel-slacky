@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -29,8 +28,8 @@ class ChannelDeleted implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('private-channel.' . $this->channelId),
-            new PresenceChannel('presence-channel.' . $this->channelId),
+            new PrivateChannel('private-channel.'.$this->channelId),
+            new PresenceChannel('presence-channel.'.$this->channelId),
         ];
     }
 

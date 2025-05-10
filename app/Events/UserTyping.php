@@ -4,7 +4,6 @@ namespace App\Events;
 
 use App\Models\Channel;
 use App\Models\User;
-use Illuminate\Broadcasting\Channel as BroadcastChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -31,7 +30,7 @@ class UserTyping implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PresenceChannel('presence-channel.' . $this->channel->id),
+            new PresenceChannel('presence-channel.'.$this->channel->id),
         ];
     }
 

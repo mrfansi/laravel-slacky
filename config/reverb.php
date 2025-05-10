@@ -35,6 +35,14 @@ return [
             'hostname' => env('REVERB_HOST'),
             'options' => [
                 'tls' => [],
+                'cors' => [
+                    'allowed_origins' => ['*'],
+                    'allowed_methods' => ['*'],
+                    'allowed_headers' => ['*'],
+                    'exposed_headers' => false,
+                    'max_age' => 0,
+                    'supports_credentials' => true,
+                ],
             ],
             'max_request_size' => env('REVERB_MAX_REQUEST_SIZE', 10_000),
             'scaling' => [

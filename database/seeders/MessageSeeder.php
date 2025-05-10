@@ -17,20 +17,22 @@ class MessageSeeder extends Seeder
         // Get all channels and users
         $channels = Channel::all();
         $users = User::all();
-        
+
         if ($channels->isEmpty()) {
             $this->command->info('No channels found. Please run ChannelSeeder first.');
+
             return;
         }
-        
+
         if ($users->isEmpty()) {
             $this->command->info('No users found. Please run UserSeeder first.');
+
             return;
         }
-        
+
         // Sample messages for the general channel
         $generalChannel = $channels->where('name', 'general')->first();
-        
+
         if ($generalChannel) {
             // Welcome message from the first user (admin)
             $welcomeMessage = Message::create([
@@ -39,7 +41,7 @@ class MessageSeeder extends Seeder
                 'content' => 'Welcome to the general channel! This is where we discuss general topics.',
                 'type' => 'text',
             ]);
-            
+
             // Add some replies to the welcome message
             if ($users->count() > 1) {
                 Message::create([
@@ -50,7 +52,7 @@ class MessageSeeder extends Seeder
                     'type' => 'text',
                 ]);
             }
-            
+
             if ($users->count() > 2) {
                 Message::create([
                     'channel_id' => $generalChannel->id,
@@ -60,21 +62,21 @@ class MessageSeeder extends Seeder
                     'type' => 'text',
                 ]);
             }
-            
+
             // Add some regular messages
             foreach ($users as $index => $user) {
                 Message::create([
                     'channel_id' => $generalChannel->id,
                     'user_id' => $user->id,
-                    'content' => 'This is a test message from ' . $user->name . '. Message #' . ($index + 1) . '.',
+                    'content' => 'This is a test message from '.$user->name.'. Message #'.($index + 1).'.',
                     'type' => 'text',
                 ]);
             }
         }
-        
+
         // Sample messages for the random channel
         $randomChannel = $channels->where('name', 'random')->first();
-        
+
         if ($randomChannel) {
             // Add some fun messages
             $messages = [
@@ -84,7 +86,7 @@ class MessageSeeder extends Seeder
                 'What do you call a fake noodle? An impasta!',
                 'Just saw the new movie everyone\'s talking about. No spoilers, but the ending was mind-blowing!',
             ];
-            
+
             foreach ($messages as $index => $content) {
                 $userIndex = $index % $users->count();
                 Message::create([
@@ -95,10 +97,10 @@ class MessageSeeder extends Seeder
                 ]);
             }
         }
-        
+
         // Sample messages for the announcements channel
         $announcementsChannel = $channels->where('name', 'announcements')->first();
-        
+
         if ($announcementsChannel) {
             // Add some announcements from the admin
             $announcements = [
@@ -107,7 +109,7 @@ class MessageSeeder extends Seeder
                 'Reminder: Quarterly reports are due by the end of this week.',
                 'We have a new team member joining us next week. Please give them a warm welcome!',
             ];
-            
+
             foreach ($announcements as $content) {
                 Message::create([
                     'channel_id' => $announcementsChannel->id,
@@ -117,10 +119,10 @@ class MessageSeeder extends Seeder
                 ]);
             }
         }
-        
+
         // Sample messages for the private developers channel
         $devChannel = $channels->where('name', 'developers')->first();
-        
+
         if ($devChannel) {
             $devMessages = [
                 'Has anyone started working on the new API integration?',
@@ -128,10 +130,10 @@ class MessageSeeder extends Seeder
                 'The new feature is ready for testing. Please check it out and provide feedback.',
                 'We need to update our dependencies to fix some security vulnerabilities.',
             ];
-            
+
             // Get the members of the dev channel
             $devMembers = $devChannel->members;
-            
+
             foreach ($devMessages as $index => $content) {
                 $userIndex = $index % $devMembers->count();
                 Message::create([
@@ -142,14 +144,14 @@ class MessageSeeder extends Seeder
                 ]);
             }
         }
-        
+
         // Sample messages for direct message channels
         $directChannels = $channels->where('type', 'direct');
-        
+
         foreach ($directChannels as $dmChannel) {
             // Get the members of this DM channel
             $members = $dmChannel->members;
-            
+
             if ($members->count() >= 2) {
                 // Create a conversation between the two users
                 $conversation = [
@@ -159,7 +161,7 @@ class MessageSeeder extends Seeder
                     [$members[1]->id, 'Nice! Let me know if you need any help with it.'],
                     [$members[0]->id, 'Will do. Thanks!'],
                 ];
-                
+
                 foreach ($conversation as $index => $msg) {
                     Message::create([
                         'channel_id' => $dmChannel->id,

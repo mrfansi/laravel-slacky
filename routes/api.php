@@ -27,33 +27,33 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/channels/{channel}/join', [ChannelController::class, 'join']);
     Route::post('/channels/{channel}/leave', [ChannelController::class, 'leave']);
     Route::get('/channels/{channel}/members', [ChannelController::class, 'members']);
-    
+
     // Messages
     Route::get('/channels/{channel}/messages', [MessageController::class, 'index']);
     Route::post('/channels/{channel}/messages', [MessageController::class, 'store']);
     Route::get('/messages/{message}', [MessageController::class, 'show']);
     Route::put('/messages/{message}', [MessageController::class, 'update']);
     Route::delete('/messages/{message}', [MessageController::class, 'destroy']);
-    
+
     // Message Reactions
     Route::get('/messages/{message}/reactions', [MessageReactionController::class, 'index']);
     Route::post('/messages/{message}/reactions', [MessageReactionController::class, 'toggle']);
-    
+
     // Thread Replies
     Route::get('/messages/{message}/replies', [MessageController::class, 'replies']);
     Route::post('/messages/{message}/replies', [MessageController::class, 'storeReply']);
-    
+
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
-    
+
     // Typing indicator
     Route::post('/channels/{channel}/typing', [TypingController::class, 'typing']);
-    
+
     // Users
     Route::get('/users/online', [UserController::class, 'online']);
-    
+
     // Direct Messages
     Route::post('/channels/direct', [ChannelController::class, 'createDirectMessage']);
 });

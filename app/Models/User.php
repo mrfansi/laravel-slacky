@@ -52,7 +52,7 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    
+
     /**
      * Get the channels that the user has created.
      */
@@ -60,7 +60,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Channel::class, 'creator_id');
     }
-    
+
     /**
      * Get the channels that the user is a member of.
      */
@@ -70,7 +70,7 @@ class User extends Authenticatable
             ->withPivot(['role', 'joined_at'])
             ->withTimestamps();
     }
-    
+
     /**
      * Get the messages sent by the user.
      */
@@ -78,7 +78,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Message::class);
     }
-    
+
     /**
      * Check if the user is a member of the given channel.
      */
@@ -86,7 +86,7 @@ class User extends Authenticatable
     {
         return $this->channels()->where('channel_id', $channel->id)->exists();
     }
-    
+
     /**
      * Check if the user is an admin of the given channel.
      */
@@ -96,7 +96,7 @@ class User extends Authenticatable
             ->wherePivot('role', 'admin')
             ->exists();
     }
-    
+
     /**
      * Check if the user is the creator of the given channel.
      */

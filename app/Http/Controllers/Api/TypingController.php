@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Events\UserTyping;
 use App\Http\Controllers\Controller;
 use App\Models\Channel;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class TypingController extends Controller
@@ -16,7 +15,7 @@ class TypingController extends Controller
     public function typing(Channel $channel)
     {
         // Check if the user is a member of the channel
-        if (!Auth::user()->isMemberOf($channel)) {
+        if (! Auth::user()->isMemberOf($channel)) {
             return response()->json(['message' => 'You are not a member of this channel'], 403);
         }
 

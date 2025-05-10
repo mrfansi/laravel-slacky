@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MessageReaction extends Model
 {
     use HasFactory;
-    
+
     /**
      * The attributes that are mass assignable.
      *
@@ -20,7 +20,7 @@ class MessageReaction extends Model
         'user_id',
         'emoji',
     ];
-    
+
     /**
      * Get the message that owns the reaction.
      */
@@ -28,7 +28,7 @@ class MessageReaction extends Model
     {
         return $this->belongsTo(Message::class);
     }
-    
+
     /**
      * Get the user that created the reaction.
      */

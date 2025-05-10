@@ -84,7 +84,7 @@ class Message extends Model
     {
         return $this->hasMany(Attachment::class);
     }
-    
+
     /**
      * Get the reactions for the message.
      */

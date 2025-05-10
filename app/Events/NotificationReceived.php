@@ -4,7 +4,6 @@ namespace App\Events;
 
 use App\Models\Notification;
 use App\Models\User;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -31,7 +30,7 @@ class NotificationReceived implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('private-user.' . $this->recipient->id),
+            new PrivateChannel('private-user.'.$this->recipient->id),
         ];
     }
 

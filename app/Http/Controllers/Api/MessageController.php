@@ -17,15 +17,13 @@ class MessageController extends Controller
 {
     /**
      * Display a listing of the messages for a channel.
-     * 
-     * @param Request $request
-     * @param Channel $channel
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request, Channel $channel)
     {
         // Check if the user is a member of the channel
-        if (!Auth::user()->isMemberOf($channel)) {
+        if (! Auth::user()->isMemberOf($channel)) {
             return response()->json(['message' => 'You are not a member of this channel'], 403);
         }
 
@@ -44,15 +42,13 @@ class MessageController extends Controller
 
     /**
      * Store a newly created message in storage.
-     * 
-     * @param Request $request
-     * @param Channel $channel
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request, Channel $channel)
     {
         // Check if the user is a member of the channel
-        if (!Auth::user()->isMemberOf($channel)) {
+        if (! Auth::user()->isMemberOf($channel)) {
             return response()->json(['message' => 'You are not a member of this channel'], 403);
         }
 
@@ -77,8 +73,8 @@ class MessageController extends Controller
         // Handle attachments if any
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('attachments/' . $channel->id, 'public');
-                
+                $path = $file->store('attachments/'.$channel->id, 'public');
+
                 $message->attachments()->create([
                     'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,
@@ -122,8 +118,7 @@ class MessageController extends Controller
 
     /**
      * Remove the specified message from storage.
-     * 
-     * @param Message $message
+     *
      * @return \Illuminate\Http\Response
      */
     public function destroy(Message $message)
@@ -133,7 +128,7 @@ class MessageController extends Controller
         $isAdmin = Auth::user()->isAdminOf($message->channel);
         $isCreator = Auth::user()->isCreatorOf($message->channel);
 
-        if (!$isAuthor && !$isAdmin && !$isCreator) {
+        if (! $isAuthor && ! $isAdmin && ! $isCreator) {
             return response()->json(['message' => 'You do not have permission to delete this message'], 403);
         }
 
@@ -152,50 +147,46 @@ class MessageController extends Controller
 
         return response()->noContent();
     }
-    
+
     /**
      * Get replies for a thread.
-     * 
-     * @param Request $request
-     * @param Message $message
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function replies(Request $request, Message $message)
     {
         // Check if the user is a member of the channel
-        if (!Auth::user()->isMemberOf($message->channel)) {
+        if (! Auth::user()->isMemberOf($message->channel)) {
             return response()->json(['message' => 'You are not a member of this channel'], 403);
         }
-        
+
         $replies = $message->replies()
             ->with(['user', 'attachments', 'reactions'])
             ->latest()
             ->paginate(25);
-            
+
         return response()->json($replies);
     }
-    
+
     /**
      * Store a reply to a message.
-     * 
-     * @param Request $request
-     * @param Message $message
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function storeReply(Request $request, Message $message)
     {
         // Check if the user is a member of the channel
-        if (!Auth::user()->isMemberOf($message->channel)) {
+        if (! Auth::user()->isMemberOf($message->channel)) {
             return response()->json(['message' => 'You are not a member of this channel'], 403);
         }
-        
+
         $validated = $request->validate([
             'content' => ['required', 'string'],
             'type' => ['sometimes', Rule::in(['text', 'image', 'file'])],
             'attachments' => ['sometimes', 'array'],
             'attachments.*' => ['file', 'max:10240'], // 10MB max file size
         ]);
-        
+
         $reply = new Message([
             'channel_id' => $message->channel_id,
             'user_id' => Auth::id(),
@@ -203,14 +194,14 @@ class MessageController extends Controller
             'content' => $validated['content'],
             'type' => $validated['type'] ?? 'text',
         ]);
-        
+
         $reply->save();
-        
+
         // Handle attachments if any
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('attachments/' . $message->channel_id, 'public');
-                
+                $path = $file->store('attachments/'.$message->channel_id, 'public');
+
                 $reply->attachments()->create([
                     'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,
@@ -219,16 +210,16 @@ class MessageController extends Controller
                 ]);
             }
         }
-        
+
         $reply->load(['user', 'attachments']);
-        
+
         // Update the parent message's thread_reply_count and last_reply_at
         $message->increment('thread_reply_count');
         $message->update(['last_reply_at' => now()]);
-        
+
         // Broadcast message sent event
         broadcast(new MessageSent($reply, Auth::user()))->toOthers();
-        
+
         return response()->json($reply, 201);
     }
 }

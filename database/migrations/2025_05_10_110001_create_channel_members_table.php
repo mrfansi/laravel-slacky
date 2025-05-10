@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('joined_at')->useCurrent();
             $table->enum('role', ['admin', 'member'])->default('member');
             $table->timestamps();
-            
+
             $table->unique(['user_id', 'channel_id']);
         });
     }
