@@ -34,7 +34,7 @@ class MessageController extends Controller
             }, function ($query) {
                 return $query->whereNull('parent_message_id');
             })
-            ->latest()
+            ->oldest()
             ->paginate(25);
 
         return response()->json($messages);
@@ -162,7 +162,7 @@ class MessageController extends Controller
 
         $replies = $message->replies()
             ->with(['user', 'attachments', 'reactions'])
-            ->latest()
+            ->oldest()
             ->paginate(25);
 
         return response()->json($replies);
