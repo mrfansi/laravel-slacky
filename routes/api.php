@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ChannelController;
 use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\MessageReactionController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\TypingController;
 use App\Http\Controllers\Api\UserController;
@@ -30,8 +31,17 @@ Route::middleware('auth:sanctum')->group(function () {
     // Messages
     Route::get('/channels/{channel}/messages', [MessageController::class, 'index']);
     Route::post('/channels/{channel}/messages', [MessageController::class, 'store']);
+    Route::get('/messages/{message}', [MessageController::class, 'show']);
     Route::put('/messages/{message}', [MessageController::class, 'update']);
     Route::delete('/messages/{message}', [MessageController::class, 'destroy']);
+    
+    // Message Reactions
+    Route::get('/messages/{message}/reactions', [MessageReactionController::class, 'index']);
+    Route::post('/messages/{message}/reactions', [MessageReactionController::class, 'toggle']);
+    
+    // Thread Replies
+    Route::get('/messages/{message}/replies', [MessageController::class, 'replies']);
+    Route::post('/messages/{message}/replies', [MessageController::class, 'storeReply']);
     
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);

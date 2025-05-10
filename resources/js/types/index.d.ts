@@ -74,6 +74,17 @@ export interface ChannelMember {
     [key: string]: unknown;
 }
 
+export interface MessageReaction {
+    id: number;
+    message_id: number;
+    user_id: number;
+    emoji: string;
+    created_at: string;
+    updated_at: string;
+    user?: User;
+    [key: string]: unknown;
+}
+
 export interface Message {
     id: number;
     channel_id: number;
@@ -82,6 +93,8 @@ export interface Message {
     content: string;
     type: 'text' | 'image' | 'file';
     read_at: string | null;
+    thread_reply_count: number;
+    last_reply_at: string | null;
     created_at: string;
     updated_at: string;
     deleted_at: string | null;
@@ -89,6 +102,7 @@ export interface Message {
     attachments?: Attachment[];
     replies?: Message[];
     parent_message?: Message;
+    reactions?: MessageReaction[];
     [key: string]: unknown;
 }
 

@@ -24,6 +24,8 @@ class Message extends Model
         'content',
         'type',
         'read_at',
+        'thread_reply_count',
+        'last_reply_at',
     ];
 
     /**
@@ -38,6 +40,8 @@ class Message extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
+            'last_reply_at' => 'datetime',
+            'thread_reply_count' => 'integer',
         ];
     }
 
@@ -79,6 +83,14 @@ class Message extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(Attachment::class);
+    }
+    
+    /**
+     * Get the reactions for the message.
+     */
+    public function reactions(): HasMany
+    {
+        return $this->hasMany(MessageReaction::class);
     }
 
     /**

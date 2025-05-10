@@ -9,24 +9,33 @@ import { cn } from '@/lib/utils';
 import axios from 'axios';
 
 interface MessageInputProps {
-    channel: Channel;
+    channel: Channel | number;  // Can accept either Channel object or channel ID
     onMessageSent?: () => void;
+    onSendMessage?: (content: string, attachments?: File[]) => void;  // Alternative callback for thread replies
     parentMessageId?: number | null;
     placeholder?: string;
     onTyping?: () => void;
+    compact?: boolean;  // For more compact display in thread view
 }
 
 export function MessageInput({ 
     channel, 
     onMessageSent, 
+    onSendMessage,
     parentMessageId = null,
-    placeholder,
-    onTyping
+    placeholder = 'Type a message...',
+    onTyping,
+    compact = false
 }: MessageInputProps) {
     const [message, setMessage] = useState('');
     const [files, setFiles] = useState<File[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    
+    // Get channel ID from either Channel object or direct ID
+    const getChannelId = (): number => {
+        return typeof channel === 'number' ? channel : channel.id;
+    };
     
     // Handle sending a message
     const sendMessage = async () => {
