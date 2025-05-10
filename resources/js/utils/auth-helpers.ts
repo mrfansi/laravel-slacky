@@ -43,5 +43,21 @@ export const initializeEcho = (): void => {
     if (echo.connector?.options?.auth?.headers) {
       echo.connector.options.auth.headers['X-CSRF-TOKEN'] = csrfToken;
     }
+    
+    // Join the global presence channel to track online users
+    try {
+      window.Echo.join('presence-global')
+        .here((users: any) => {
+          console.log('Online users:', users);
+        })
+        .joining((user: any) => {
+          console.log('User joined:', user);
+        })
+        .leaving((user: any) => {
+          console.log('User left:', user);
+        });
+    } catch (error) {
+      console.error('Error joining presence channel:', error);
+    }
   }
 };

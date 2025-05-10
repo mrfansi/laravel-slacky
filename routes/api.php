@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\ChannelController;
 use App\Http\Controllers\Api\MessageController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\TypingController;
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Channels
     Route::get('/channels', [ChannelController::class, 'index']);
     Route::post('/channels', [ChannelController::class, 'store']);
+    Route::get('/channels/search', [ChannelController::class, 'search']);
+    Route::get('/channels/joined', [ChannelController::class, 'joined']);
     Route::get('/channels/{channel}', [ChannelController::class, 'show']);
     Route::put('/channels/{channel}', [ChannelController::class, 'update']);
     Route::delete('/channels/{channel}', [ChannelController::class, 'destroy']);
@@ -37,4 +40,10 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Typing indicator
     Route::post('/channels/{channel}/typing', [TypingController::class, 'typing']);
+    
+    // Users
+    Route::get('/users/online', [UserController::class, 'online']);
+    
+    // Direct Messages
+    Route::post('/channels/direct', [ChannelController::class, 'createDirectMessage']);
 });

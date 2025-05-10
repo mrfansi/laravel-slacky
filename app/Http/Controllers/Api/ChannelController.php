@@ -185,4 +185,109 @@ class ChannelController extends Controller
 
         return response()->json($members);
     }
+    
+    /**
+     * Create or retrieve a direct message channel between the current user and another user.
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createDirectMessage(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'exists:users,id'],
+        ]);
+        
+        $currentUserId = Auth::id();
+        $otherUserId = $validated['user_id'];
+        
+        // Don't allow creating a DM with yourself
+        if ($currentUserId == $otherUserId) {
+            return response()->json(['message' => 'Cannot create a direct message channel with yourself'], 400);
+        }
+        
+        // Check if a direct message channel already exists between these users
+        $existingChannel = Channel::whereType('direct')
+            ->whereHas('members', function ($query) use ($currentUserId) {
+                $query->where('user_id', $currentUserId);
+            })
+            ->whereHas('members', function ($query) use ($otherUserId) {
+                $query->where('user_id', $otherUserId);
+            })
+            ->first();
+            
+        if ($existingChannel) {
+            return response()->json($existingChannel->load('members'));
+        }
+        
+        // Get the other user to use their name in the channel name
+        $otherUser = \App\Models\User::find($otherUserId);
+        
+        // Create a new direct message channel
+        $channel = new Channel([
+            'name' => 'DM: ' . Auth::user()->name . ' & ' . $otherUser->name,
+            'description' => 'Direct message between ' . Auth::user()->name . ' and ' . $otherUser->name,
+            'is_private' => true,
+            'type' => 'direct',
+            'creator_id' => $currentUserId,
+        ]);
+        
+        $channel->save();
+        
+        // Add both users as members
+        $channel->members()->attach([
+            $currentUserId => ['role' => 'member', 'joined_at' => now()],
+            $otherUserId => ['role' => 'member', 'joined_at' => now()],
+        ]);
+        
+        return response()->json($channel->load('members'), 201);
+    }
+    
+    /**
+     * Search for channels by name or description.
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function search(Request $request)
+    {
+        $validated = $request->validate([
+            'query' => ['required', 'string', 'min:2', 'max:100'],
+        ]);
+        
+        $query = $validated['query'];
+        
+        // Search for public channels that match the query
+        $channels = Channel::where(function ($queryBuilder) use ($query) {
+                $queryBuilder->where('name', 'like', '%' . $query . '%')
+                    ->orWhere('description', 'like', '%' . $query . '%');
+            })
+            ->where(function ($queryBuilder) {
+                // Only include public channels or private channels the user is a member of
+                $queryBuilder->where('is_private', false)
+                    ->orWhereHas('members', function ($memberQuery) {
+                        $memberQuery->where('user_id', Auth::id());
+                    });
+            })
+            ->with('creator')
+            ->orderBy('name')
+            ->limit(20)
+            ->get();
+        
+        return response()->json([
+            'data' => $channels,
+            'message' => 'Channels retrieved successfully',
+        ]);
+    }
+    
+    /**
+     * Get channels the user has joined.
+     * 
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function joined()
+    {
+        $channels = Auth::user()->channels()->get(['channels.id']);
+        return response()->json($channels);
+    }
 }

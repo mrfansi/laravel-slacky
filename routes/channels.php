@@ -33,3 +33,20 @@ Broadcast::channel('presence-channel.{channelId}', function (User $user, $channe
 Broadcast::channel('private-user.{userId}', function (User $user, $userId) {
     return (int) $user->id === (int) $userId;
 });
+
+// Global presence channel for tracking online users
+Broadcast::channel('presence-global', function (User $user) {
+    // Update user's last_seen_at timestamp
+    $user->update([
+        'last_seen_at' => now(),
+        'is_online' => true
+    ]);
+    
+    return [
+        'id' => $user->id,
+        'name' => $user->name,
+        'email' => $user->email,
+        'avatar' => $user->avatar,
+        'last_seen_at' => $user->last_seen_at
+    ];
+});

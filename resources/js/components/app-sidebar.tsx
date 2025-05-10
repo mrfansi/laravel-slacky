@@ -5,13 +5,15 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { Switch } from '@/components/ui/switch';
-import { Channel, type NavItem } from '@/types';
+import { Channel, User, type NavItem } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { BookOpen, Hash, Lock, MessageSquare, Plus, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 import { NavUser } from './nav-user';
+import { OnlineUsers } from './online-users';
+import { ChannelSearch } from './channel-search';
 import { cn } from '@/lib/utils';
 import { Separator } from './ui/separator';
 
@@ -52,7 +54,7 @@ export function AppSidebar() {
     };
     
     // Get auth user outside of useEffect to avoid hooks rules violation
-    const { auth } = usePage().props as { auth?: { user?: { id: number } } };
+    const { auth } = usePage().props as { auth?: { user?: User } };
     const userId = auth?.user?.id;
     
     // Fetch channels on component mount
@@ -136,6 +138,16 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <ScrollArea className="h-[calc(100vh-10rem)]">
+                    {/* Channel Search */}
+                    {auth?.user && <ChannelSearch />}
+                    
+                    <Separator className="my-2" />
+                    
+                    {/* Online Users Section */}
+                    {auth?.user && <OnlineUsers currentUser={auth.user} />}
+                    
+                    <Separator className="my-2" />
+                    
                     <div className="px-4 py-2">
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-sm font-medium text-muted-foreground">Channels</h3>
