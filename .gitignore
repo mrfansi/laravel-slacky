@@ -26,3 +26,5 @@ yarn-error.log
 /.cursor
 /.roo
 /.windsurf
+/docs
+/tasks
